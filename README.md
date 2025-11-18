@@ -58,13 +58,41 @@
    ### • Amo o Ritmo
 ### • Romântica demais
    ### • TOP
+
+
 ## Consultas (Queries) Implementadas
-### Recomendar músicas que o usuário ainda não ouviu
-### Baseado no gênero que ele mais escuta.
-### Recomendar artistas seguidos por amigos
-### Identificar conexões.
-###  Recomendar músicas parecidas com as que ele curtiu
-### Usando similaridade por gênero ou artista.
+
+### Recomendar músicas do mesmo gênero que o usuário já ouviu (e que ele ainda não ouviu)
+MATCH (u:User {name: "Ana"})-[:LISTENED]->(:Song)-[:HAS_GENRE]->(g:Genre)<-[:HAS_GENRE]-(rec:Song)
+WHERE NOT (u)-[:LISTENED]->(rec)
+RETURN rec.name AS recommended_song, g.name AS genre
+LIMIT 10;
+
+### Recomendar músicas de artistas que o usuário segue (mas que ele ainda não ouviu)
+MATCH (u:User {name: "Ana"})-[:FOLLOWS]->(a:Artist)-[:BY_ARTIST]->(rec:Song)
+WHERE NOT (u)-[:LISTENED]->(rec)
+RETURN rec.name AS recommended_song, a.name AS artist
+LIMIT 10;
+
+###  Recomendar músicas populares por número de likes (globais)
+MATCH (s:Song)<-[:LIKED]-(u:User)
+RETURN s.name AS song, count(u) AS likes
+ORDER BY likes DESC
+LIMIT 10;
+
+### Recomendar músicas mais comentadas (globais)
+MATCH (s:Song)<-[:COMMENTED]-(u:User)
+RETURN s.name AS song, count(u) AS comments
+ORDER BY comments DESC
+LIMIT 10;
+
+###  “Usuários que ouviram isso também ouviram” — pegar músicas que usuários com gostos parecidos ouviram
+MATCH (u:User {name: "Ana"})-[:LISTENED]->(s1:Song)<-[:LISTENED]-(other:User)-[:LISTENED]->(rec:Song)
+WHERE NOT (u)-[:LISTENED]->(rec)
+RETURN rec.name AS recommended_song, count(distinct other) AS score
+ORDER BY score DESC
+LIMIT 10;
+
 
 <img width="842" height="498" alt="visualisation(1)" src="https://github.com/user-attachments/assets/e1b27588-8197-4d11-aa5c-bb64e1e74f46" />
 
